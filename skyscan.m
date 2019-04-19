@@ -17,7 +17,7 @@ narginchk(0,1)
 dflt.recur_over_folder=true;
 dflt.filename='190416_121040_USRP.txt';
 dflt.make_plot=true;
-dflt.sample_module=8;
+dflt.sample_module=1;
 dflt.dedicated_figure_per_file=false;     %if false, one plot for all files
 
 
@@ -37,18 +37,19 @@ end
 
 % fill short-named variables and perform some consistency check
 
-file=dflt.filename;
-recr=dflt.recur_over_folder;
-plot=dflt.make_plot;
-dfpf=dflt.dedicated_figure_per_file;
-smpl=dflt.sample_module;
-
-if smpl ~= 0 && ((smpl & (smpl - 1)) ~= 0)
-   smpl=power(2, ceil(log(smpl)/log(2)));
-   fprintf('As the given sampling ratio is not 2^n, it will be changed to %d',smpl);
+file=in.filename;
+recr=in.recur_over_folder;
+plot=in.make_plot;
+dfpf=in.dedicated_figure_per_file;
+if in.sample_module <= 0
+    smpl=1;
+else
+    smpl=pow2(floor(log2(in.sample_module)));
 end
+fprintf('The sample ratio has been rounded to the nearest smallest positive n^2 = %d\n',smpl);
+
 if smpl>8192
-   fprintf('The given sampling ration is bigger than the data set: it will be changed to 512');
+   fprintf('The given sampling ratio is bigger than the data set: it will be changed to 512');
    smpl=512;
 end
 
