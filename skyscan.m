@@ -101,6 +101,9 @@ if plot
                 y=data(k,:,c);
                 scatter(x,y,1,cmap(k,:));
             end
+            legend(legendgenerator(size(data,1)));
+            plotbrowser;
+            legend('toggle')
             hold off
         end
     else
@@ -113,6 +116,16 @@ if plot
                 scatter(x,y,1,cmap(c,:));
             end
         end
+        legend(legendgenerator(size(data,1)*nfiles));
+        plotbrowser;
+        legend('toggle')
         hold off
     end
 end
+
+function l=legendgenerator(num)
+nmb=(1:num)';
+str=repmat('Data',[num 1]);
+l=strcat(str, {' '}, num2str(nmb));
+
+
