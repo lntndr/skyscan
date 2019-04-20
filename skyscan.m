@@ -15,11 +15,12 @@ narginchk(0,1)
 %% set defaults
 
 dflt.recur_over_folder=true;
-dflt.filename='190416_121040_USRP.txt';
+dflt.filename='';
 dflt.make_plot=true;
 dflt.sample_module=1;
-dflt.dedicated_figure_per_file=false;     %if false, one plot for all files
-
+dflt.dedicated_figure_per_file=true;     %if false, one plot for all files
+dflt.enable_browser=false;
+dflt.custom_directory='';
 
 %% input handling and checks
 
@@ -37,10 +38,12 @@ end
 
 % fill short-named variables and perform some consistency check
 
-file=in.filename;
+flist=[in.filename,""];                 % I need it to be an array
 recr=in.recur_over_folder;
 plot=in.make_plot;
 dfpf=in.dedicated_figure_per_file;
+brws=in.enable_browser;
+cudir=in.custom_directory;
 if in.sample_module <= 0
     smpl=1;
 else
@@ -53,27 +56,42 @@ if smpl>8192
    smpl=512;
 end
 
+if ~recr && isempty(flist)
+    error("If you don't want to recur over a folder, you must specify a filename");
+    return;
+end
+
 %% text files handling
 
 if recr % Working on a directory
-    [piru,~,~]=fileparts(mfilename('fullpath'));
-    cd(piru);
+    if isempty(cudir)
+        [piru,~,~]=fileparts(mfilename('fullpath'));
+        cd(piru);
+    else
+        piru=cudir;
+    end
     fprintf('All the data files in %s will be analyzed\n', piru);
-    filefinder=dir('*_USRP.txt');
-    flist=[filefinder.name,""];     %Weird workaround
-    flist=flist(1:end-1)';
-else % Working on a single file
-    flist=dflt.filename;
+    try
+        filefinder=dir('*_USRP.txt');
+    catch
+        disp("Filefinder has not found *_USRP.txt files");
+        return;
+    end
+    flist=[filefinder.name,""];         %Weird workaround
 end
 
-nfiles=size(flist,1);
-
-%% Moving data into MATLAB structures
-
+nfiles=size(flist,2)-1;
 data=zeros(150,8195,nfiles);
+
 for c=1:nfiles
-    data(:,:,c)=importdata(flist(c),',');
+    try
+        data(:,:,c)=importdata(flist(c),',');
+    catch
+        error("Unable to open file.");
+        return;
+    end
 end
+
 data(:,1:3,:)=[]; %Clean unwanted data
 
 %% Managing X
@@ -93,7 +111,7 @@ if plot
     end
     
     if dfpf
-        cmap=parula(size(data,1));
+        cmap=jet(size(data,1));
         for c=1:nfiles
             figure('Name',flist(c));
             hold on
@@ -101,13 +119,15 @@ if plot
                 y=data(k,:,c);
                 scatter(x,y,1,cmap(k,:));
             end
-            legend(legendgenerator(size(data,1)));
-            plotbrowser;
-            legend('toggle')
+            if brws
+                legend(legendgenerator(size(data,1)));
+                plotbrowser;
+                legend('toggle')
+            end
             hold off
         end
     else
-        cmap=parula(nfiles);
+        cmap=jet(nfiles);
         figure('Name','Comparativa multifile')
         hold on
         for c=1:nfiles
@@ -116,16 +136,16 @@ if plot
                 scatter(x,y,1,cmap(c,:));
             end
         end
-        legend(legendgenerator(size(data,1)*nfiles));
-        plotbrowser;
-        legend('toggle')
+        if brws
+            legend(legendgenerator(size(data,1)*nfiles));
+            plotbrowser;
+            legend('toggle')
+        end
         hold off
     end
 end
 
 function l=legendgenerator(num)
 nmb=(1:num)';
-str=repmat('Data',[num 1]);
+str=repmat('Line',[num 1]);
 l=strcat(str, {' '}, num2str(nmb));
-
-
