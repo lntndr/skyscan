@@ -5,10 +5,9 @@ function  [out] = skyscan(in)
 %   in = skyscan returns the default setup as a struct. You have to edit
 %   it to change the filename(s) you have to plot.
 %
-%   skyscan(in) returns the plot
+%   skyscan(in) runs the program with options in the "in" file
 %
-%   [data] = skyscan(in) returns the integral of the collected data and the
-%   plot if requested
+%   
 
 narginchk(0,1)
 
