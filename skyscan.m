@@ -56,7 +56,12 @@ if smpl>8192
    smpl=512;
 end
 
-if ~recr && isempty(flist)
+if ~recr && flist(1)==("") && cudir~=("")
+    warning("As you have specified a directory and not a file, recur option will be enabled")
+    recr = true;
+end
+
+if ~recr && flist(1)==("")
     error("If you don't want to recur over a folder, you must specify a filename");
     return;
 end
@@ -66,10 +71,10 @@ end
 if recr % Working on a directory
     if isempty(cudir)
         [piru,~,~]=fileparts(mfilename('fullpath'));
-        cd(piru);
     else
         piru=cudir;
     end
+    cd(piru);
     fprintf('All the data files in %s will be analyzed\n', piru);
     try
         filefinder=dir('*_USRP.txt');
@@ -84,12 +89,7 @@ nfiles=size(flist,2)-1;
 data=zeros(150,8195,nfiles);
 
 for c=1:nfiles
-    try
         data(:,:,c)=importdata(flist(c),',');
-    catch
-        error("Unable to open file.");
-        return;
-    end
 end
 
 data(:,1:3,:)=[]; %Clean unwanted data
