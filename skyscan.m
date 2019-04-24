@@ -157,7 +157,9 @@ if plot
             scatter(x,y,1,colorpicker(cmap,k,c));
         end
         hold off
-        is_brws(sz*nfiles);
+        if c==1 || c==nfiles
+            is_brws(sz,flist,c);
+        end
     end
   
     if fig_lim==1
@@ -166,20 +168,22 @@ if plot
     
 end
 
-function l=legendgenerator(num)
+function l=legendgenerator(sz,flist,c)
 % LEGENDGENERATOR is useful for giving names in plotbrowser
-%
-%   l=legend(num) generates an array of num element in form 'Line 1' ...
-nmb=(1:num)';
-str=repmat('Line',[num 1]);
-l=strcat(str, {' '}, num2str(nmb));
+flist=regexprep(flist, '_USRP.txt', '', 'lineanchors');
+nmb=(1:sz)';
+l=[];
+for k=1:c
+    str=repmat(flist(k),[sz 1]);
+    l=[l,strcat(str, {'  Line:'}, num2str(nmb))];
+end
 
-function plotlegend(num)
-legend(legendgenerator(num));
+function plotlegend(sz,flist,c)
+legend(legendgenerator(sz,flist,c));
 plotbrowser;
 legend('toggle')
 
-function nothing(num)
+function nothing(sz,flist,c)
 return;
 
 function color=dedi_picker(cmap,k,~)
