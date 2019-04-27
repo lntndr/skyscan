@@ -24,7 +24,7 @@ dflt.sample_module=1;
 dflt.dedicated_figure_per_file=true;     %if false, one plot for all files
 dflt.enable_browser=false;
 dflt.silent_run=false;
-dflt.export_png=false;
+dflt.export_png=true;
 
 %% input handling and checks
 
@@ -171,22 +171,37 @@ if plot
         fig_lim=1;
     end
     
+    if slnt
+        createfig=@silentfigure;
+    else
+        createfig=@loudfigure;
+    end
+    
+    if epng
+        mkdir('skyscan_png');
+        addpath('skyscan_png');
+        printfig=@exportpng;
+    else
+        printfig=@nothing2;
+    end
+    
     if brws
        is_brws=@plotlegend;
     else
-       is_brws=@nothing;           %Like this one
+       is_brws=@nothing3;           %Like this one
     end
     
     for c=1:nfiles
         if c<=fig_lim
-            figure('Name',flist(c));
+            createfig(flist,c);
         end
         hold on
             y=data(:,:,c);
             l=line(x,y,'LineStyle','none','Marker','.');
             set(l, {'color'}, num2cell(cmap, 2));
-        hold off
+        printfig(cudir,flist(c));
         is_brws(rows,flist,c);
+        hold off
     end
   
     if fig_lim==1
@@ -200,7 +215,7 @@ function l=legendgenerator(sz,flist,c)
 
 flist=regexprep(flist, '_USRP.txt', '', 'lineanchors');
 nmb=(1:sz)';
-l=[];
+l=[];f
 for k=1:c
     str=repmat(flist(k),[sz 1]);
     l=[l,strcat(str, {'  Line:'}, num2str(nmb))];
@@ -212,5 +227,19 @@ legend(legendgenerator(sz,flist,c));
 plotbrowser;
 legend('toggle')
 
-function nothing(~,~,~)
+function nothing2(~,~)
 return;
+
+function nothing3(~,~,~)
+return;
+
+function sname=silentfigure(flist,c)
+figure('Name',flist(c),'Visible','off');
+title(flist(c));
+
+function loudfigure(flist,c)
+figure('Name',flist(c));
+title(flist(c));
+
+function exportpng(cudir,name)
+export_fig(sprintf('%s/skyscan_png/%s.png',cudir,name),'-png','-m1');
