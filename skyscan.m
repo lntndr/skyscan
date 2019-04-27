@@ -55,19 +55,27 @@ smpl=in.sample_module;
 
 % Filesystem
 
-if ~recr && flist(1)==("")
-    error("If you don't want to recur over a directory, you must specify a filename");
+if flist(1)==("")   % The user hasn't specified a filename
+    if ~recr
+        error("If you don't want to recur over a directory, you must specify a filename");
     return;
+    end
+else                % The user has specified a filename
+    if recr
+       warning("As you have specified a filename, recur will be set to false");
+       recr=false;
+    end
 end
-
-if recr && flist(1)~=("")
-    warning("As you have specified a filename, recur will be set to false");
-    recr=false;
-end    
 
 % Graphics (useful only if plot needed)
 
-if plot 
+if plot
+    
+    % If only one file, rule will be autoset to dfpf=true
+    
+    if flist(1)~=("") && ~dfpf
+       dfpf=true;
+    end
 
     % sample ratio: as it can break the function if ill defined, the
     % function will always redefine it as a positive power of 2 guaranteed
@@ -129,15 +137,13 @@ cols=size(data,2);
 x = 1:cols;
 x = x*19531;
 x = x + 1300001024;
-x = (x - 19531)';
+x = (x - 19531);
 
 %% Integral time
 
-integral = zeros(rows,nfiles);
+integral=zeros(nfiles,rows);
 for k=1:nfiles
-    for n=1:rows
-        integral(n,k)=trapz(data(n,:));
-    end
+        integral(k,:)=trapz(data(:,:,k),2);
 end
 out = integral;
     
@@ -145,6 +151,7 @@ out = integral;
 
 if plot
     
+    % ----- NEVER MOVE INTEGRAL BLOCK BELOW THIS IF -----
     if smpl>1
         x=x(1:smpl:end);
         data=data(:,1:smpl:end,:);
@@ -175,7 +182,7 @@ if plot
         hold on
         for k=1:rows
             y=data(k,:,c);
-            scatter(x,y,1,colorpicker(cmap,k,c));
+            line(x,y,'LineStyle','none','Marker','.','Color',colorpicker(cmap,k,c));
         end
         hold off
         is_brws(rows,flist,c);
