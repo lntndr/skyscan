@@ -25,6 +25,7 @@ dflt.dedicated_figure_per_file=true;     %if false, one plot for all files
 dflt.enable_browser=false;
 dflt.silent_run=false;
 dflt.export_png=true;
+dflt.output_dir='';
 
 %% input handling and checks
 
@@ -54,6 +55,7 @@ brws=in.enable_browser;
 smpl=in.sample_module;
 slnt=in.silent_run;
 epng=in.export_png;
+odir=in.output_dir;
 
 %% Consistency checks
 
@@ -105,7 +107,7 @@ end
 if recr % Working on a directory
     if isempty(cudir)
         [cudir,~,~]=fileparts(mfilename('fullpath'));
-        disp("You don't have specified a custom directory");
+        disp("You don't have specified a custom data directory");
     end
     cd(cudir);
     fprintf('All the data files in %s will be analyzed\n', cudir);
@@ -116,6 +118,7 @@ end
 % At this point i have an array of filenames
 
 nfiles=size(flist,2)-1;
+% ?Ask the user if sure about running verbose if nfiles>10?
 data=zeros(150,8195,nfiles);
 
 for c=1:nfiles
@@ -124,6 +127,8 @@ end
 
 % header=data(:,1:3,:); %Just in case they can prove useful
 data(:,1:3,:)=[]; %Clean unwanted data
+
+disp('Data correctly retrieved')
 
 rows=size(data,1);
 cols=size(data,2);
@@ -178,8 +183,13 @@ if plot
     end
     
     if epng
-        mkdir('skyscan_png');
-        addpath('skyscan_png');
+        if isempty(odir)
+            disp("You don't have specified a custom output folder");
+            odir=cudir;
+        end
+        mkdir('skyscan_png');      %Rembember to add to path, doing that in
+        %addpath('skyscan_png');   %the program significantly slows down
+                                   %the function.
         printfig=@exportpng;
     else
         printfig=@nothing2;
@@ -199,7 +209,7 @@ if plot
             y=data(:,:,c);
             l=line(x,y,'LineStyle','none','Marker','.');
             set(l, {'color'}, num2cell(cmap, 2));
-        printfig(cudir,flist(c));
+        printfig(odir,flist(c));
         is_brws(rows,flist,c);
         hold off
     end
@@ -207,7 +217,9 @@ if plot
     if fig_lim==1
         set(gcf,'Name','Multifile');
     end
-    
+    % Return to .m directory
+    [cudir,~,~]=fileparts(mfilename('fullpath'));
+    cd(cudir);
 end
 
 function l=legendgenerator(sz,flist,c)
@@ -215,7 +227,7 @@ function l=legendgenerator(sz,flist,c)
 
 flist=regexprep(flist, '_USRP.txt', '', 'lineanchors');
 nmb=(1:sz)';
-l=[];f
+l=[];
 for k=1:c
     str=repmat(flist(k),[sz 1]);
     l=[l,strcat(str, {'  Line:'}, num2str(nmb))];
@@ -235,11 +247,11 @@ return;
 
 function sname=silentfigure(flist,c)
 figure('Name',flist(c),'Visible','off');
-title(flist(c));
+title(flist(c),'Interpreter','none');
 
 function loudfigure(flist,c)
 figure('Name',flist(c));
-title(flist(c));
+title(flist(c),'Interpreter','none');
 
 function exportpng(cudir,name)
 export_fig(sprintf('%s/skyscan_png/%s.png',cudir,name),'-png','-m1');
