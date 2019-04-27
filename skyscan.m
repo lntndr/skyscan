@@ -23,6 +23,8 @@ dflt.make_plot=true;
 dflt.sample_module=1;
 dflt.dedicated_figure_per_file=true;     %if false, one plot for all files
 dflt.enable_browser=false;
+dflt.silent_run=false;
+dflt.export_png=false;
 
 %% input handling and checks
 
@@ -50,6 +52,8 @@ plot=in.make_plot;
 dfpf=in.dedicated_figure_per_file;
 brws=in.enable_browser;
 smpl=in.sample_module;
+slnt=in.silent_run;
+epng=in.export_png;
 
 %% Consistency checks
 
@@ -161,11 +165,9 @@ if plot
     
     if dfpf
         cmap=jet(rows);
-        colorpicker=@dedi_picker;
         fig_lim=inf;
     else
         cmap=parula(nfiles);    
-        colorpicker=@multi_picker;
         fig_lim=1;
     end
     
@@ -180,10 +182,9 @@ if plot
             figure('Name',flist(c));
         end
         hold on
-        for k=1:rows
-            y=data(k,:,c);
-            line(x,y,'LineStyle','none','Marker','.','Color',colorpicker(cmap,k,c));
-        end
+            y=data(:,:,c);
+            l=line(x,y,'LineStyle','none','Marker','.');
+            set(l, {'color'}, num2cell(cmap, 2));
         hold off
         is_brws(rows,flist,c);
     end
@@ -213,9 +214,3 @@ legend('toggle')
 
 function nothing(~,~,~)
 return;
-
-function color=dedi_picker(cmap,k,~)
-color=cmap(k,:);
-
-function color=multi_picker(cmap,~,c)
-color=cmap(c,:);
