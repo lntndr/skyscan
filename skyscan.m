@@ -254,4 +254,4 @@ figure('Name',flist(c));
 title(flist(c),'Interpreter','none');
 
 function exportpng(cudir,name)
-export_fig(sprintf('%s/skyscan_png/%s.png',cudir,name),'-png','-m1');
+saveas(gcf,strcat(cudir,'/skyscan_png/',name,'.png'));
