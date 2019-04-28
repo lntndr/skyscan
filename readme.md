@@ -60,8 +60,7 @@ Per avere un'idea di massima di numerosi file si può configurare il programma i
 >> intg=skyscan(agrd);
 
 ```
-In questo scenario il programma prenderà tutti i file di dati nella cartella ~/Documenti/Raccolta190427, li caricherà in RAM in una matrice 3D e ne calcolerà i grafici, non mostrandoli all'utente ma salvandoli in formato png risoluzione 473*390 nella cartella ~/Immagini/raccolta190427/skyscan_png . Il programma crea la cartella se non esistente ma *non* la aggiunge al PATH di MATLAB autonomamente perché rallenterebbe l'esecuzione del programma: conviene farlo a mano. Nel caso fosse utile il blocco di codice è presente e commentato nella funzione.
-
+In questo scenario il programma prenderà tutti i file di dati nella cartella ~/Documenti/Raccolta190427, li caricherà in RAM in una matrice 3D e ne calcolerà i grafici, non mostrandoli all'utente ma salvandoli in formato png nella sottocartella /skyscan_png.
 Si noti come le definizioni di cartelle si comportino a tutti gli effetti come un cd a partire dal percorso in cui si trova skyscan.m . Sarebbero validi, ma sconsigliati, percorsi relativi.
 
 ### Controllo di fino di un file

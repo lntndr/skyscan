@@ -187,9 +187,7 @@ if plot
             disp("You don't have specified a custom output folder");
             odir=cudir;
         end
-        mkdir('skyscan_png');      %Rembember to add to path, doing that in
-        %addpath('skyscan_png');   %the program significantly slows down
-                                   %the function.
+        mkdir('skyscan_png');
         printfig=@exportpng;
     else
         printfig=@nothing2;
@@ -250,7 +248,9 @@ figure('Name',flist(c),'Visible','off');
 title(flist(c),'Interpreter','none');
 
 function loudfigure(flist,c)
-figure('Name',flist(c));
+figure('Name',flist(c));      %Rembember to add to path, doing that in
+        %addpath('skyscan_png');   %the program significantly slows down
+                                   %the function.
 title(flist(c),'Interpreter','none');
 
 function exportpng(cudir,name)
