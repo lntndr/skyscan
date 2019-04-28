@@ -1,12 +1,16 @@
 # skyscan
+
 ## Problemi noti
-- **Il programma non legge direttamente i file creati da Labview ma una loro versione CSV-like generata da filecleaner.sh che elimina le righe vuote, gli spazi bianchi e imposta , come separatore valori e . come separatore decimali.** Lo script bash non è eseguibile nativamente su Windows, ma solo attraverso espedienti come la riga bash installata con git, Cygwin o WSL.
+
+- **Il programma non legge direttamente i file creati da Labview ma una loro versione CSV-like generata da filecleaner.sh su Linux o da filecleaner.ps1 su Windows che elimina le righe vuote, gli spazi bianchi e imposta , come separatore valori e . come separatore decimali.**
 - I controlli di coerenza degli argomenti sono incompleti
+
 ## Da fare
 -Permettere controllo risoluzione grafichini
+
 ## Riferimento
 ```
-set=skyskan
+set=skyscan
 ```
 crea una struct *set* con al suo interno i valori predefiniti dei possibili parametri con cui si puo fare girare il programma. Nello specifico sono
 - **recur_over_folder=true**
@@ -24,15 +28,23 @@ crea una struct *set* con al suo interno i valori predefiniti dei possibili para
 	-Se vero crea una figura per ogni file assegnando un colore a ogni riga del file, se falso crea un'unica figura per tutti i file assegnando un colore a ogni file.
 - **enable_browser=false**
 	- Apre il *plotbrowser* di MATLAB permettendo di selezionare, mostare e nascondere ogni presa dati in un grafico. Sconsigliato l'uso con prese dati particolarmente impegnative perché abbastanza lento.
+- **silent_run=false**
+	- Non mostra le figure quando prodotte.
+- **export_png=false**
+	- Esporta in una sottocartella *skyscan_png* i grafici in formato .png 
+- **output_dir=''**
+	- Permette di scegliere la cartella in cui viene creata la sottocartella *skyscan_png*. Se non specificato, è uguale a *custom_directory*, se anche questa non è specificata è, come al solito, la cartella dove si trova skyscan.m
 
 ```
-skyskan(set)
+int=skyskan(set)
 ```
-esegue con i valori impostati in *set*. Non è necessario che *set* contenga tutti i campi in quanto il programma provvede a completare quelli mancanti con quelli di default sopra elencati. L'integrale viene restituito come una matrice in cui ogni riga corrisponde a un file analizzato e ogni elemento all'integrale su una riga del file delle misure.
+esegue con i valori impostati in *set*. L'integrale viene restituito come una matrice in cui ogni riga corrisponde a un file analizzato e ogni elemento all'integrale su una riga del file delle misure.
 
 ## Scenari d'uso
+Cambiando i valori da quelli di default sopra si può modificare il comportamento del programma in modo di renderlo utile in diversi contesti.
 ### Anteprima grezza raccolte dati
 Per avere un'idea di massima di numerosi file si può configurare il programma in tal modo
+
 ```
 >> agrd=skyscan;
 	    recur_over_folder: 1
@@ -48,7 +60,7 @@ Per avere un'idea di massima di numerosi file si può configurare il programma i
 >> intg=skyscan(agrd);
 
 ```
-In questo scenario il programma prenderà tutti i file di dati nella cartella ~/Documenti/Raccolta190427, li caricherà in RAM in una matrice 3D e ne calcolerà i grafici, non mostrandoli all'utente ma salvandoli in formato png risoluzione 473*390 nella cartella ~/Immagini/raccolta190427/skyscan_png . Il programma crea la cartella se non esistente ma *non* la aggiunge al PATH di MATLAB autonomamente perché rallenterebbe l'esecuzione del programma: conviene farlo a mano.
+In questo scenario il programma prenderà tutti i file di dati nella cartella ~/Documenti/Raccolta190427, li caricherà in RAM in una matrice 3D e ne calcolerà i grafici, non mostrandoli all'utente ma salvandoli in formato png risoluzione 473*390 nella cartella ~/Immagini/raccolta190427/skyscan_png . Il programma crea la cartella se non esistente ma *non* la aggiunge al PATH di MATLAB autonomamente perché rallenterebbe l'esecuzione del programma: conviene farlo a mano. Nel caso fosse utile il blocco di codice è presente e commentato nella funzione.
 
 Si noti come le definizioni di cartelle si comportino a tutti gli effetti come un cd a partire dal percorso in cui si trova skyscan.m . Sarebbero validi, ma sconsigliati, percorsi relativi.
 
