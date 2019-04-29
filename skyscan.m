@@ -9,23 +9,23 @@ function  [out] = skyscan(in)
 %
 %   out = skyscan(in) returns trapz integrals on the rows
 %
+
 narginchk(0,1)
 
 %% set defaults
 
 %filesystem defaults
 dflt.recur_over_folder=true;
-dflt.filename='';
-dflt.custom_directory='';
+dflt.filenames="";
+dflt.custom_directory="";
 
 %graphic defaults
 dflt.make_plot=true;
-dflt.sample_module=1;
 dflt.dedicated_figure_per_file=true;     %if false, one plot for all files
 dflt.enable_browser=false;
 dflt.silent_run=false;
 dflt.export_png=true;
-dflt.output_dir='';
+dflt.output_dir="";
 
 %% input handling and checks
 
@@ -44,15 +44,14 @@ end
 % fill short-named variables
 
 % filesystem reading
-flist=[in.filename,""];                 % I need it to be an array
+flst=[in.filenames,""];                 % I need it to be an array
 recr=in.recur_over_folder;
-cudir=in.custom_directory;
+cdir=in.custom_directory;
 
 % graphics reading
 plot=in.make_plot;
 dfpf=in.dedicated_figure_per_file;
 brws=in.enable_browser;
-smpl=in.sample_module;
 slnt=in.silent_run;
 epng=in.export_png;
 odir=in.output_dir;
@@ -61,10 +60,9 @@ odir=in.output_dir;
 
 % Filesystem
 
-if flist(1)==("")   % The user hasn't specified a filename
+if flst(1)==("")   % The user hasn't specified a filename
     if ~recr
         error("If you don't want to recur over a directory, you must specify a filename");
-    return;
     end
 else                % The user has specified a filename
     if recr
@@ -79,25 +77,8 @@ if plot
     
     % If only one file, rule will be autoset to dfpf=true
     
-    if flist(1)~=("") && ~dfpf
+    if flst(1)~=("") && ~dfpf
        dfpf=true;
-    end
-
-    % sample ratio: as it can break the function if ill defined, the
-    % function will always redefine it as a positive power of 2 guaranteed
-    % to be well behaved
-
-    if smpl <= 0
-        smpl=1;
-    else
-        smpl=pow2(floor(log2(smpl)));
-    end
-
-    fprintf('The sample ratio has been rounded to the nearest smallest positive n^2 = %d\n',smpl);
-
-    if smpl>8192
-       disp('The given sampling ratio is bigger than the data set: it will be changed to 512');
-       smpl=512;
     end
 
 end
@@ -105,30 +86,29 @@ end
 %% text files handling
 
 if recr % Working on a directory
-    if isempty(cudir)
-        [cudir,~,~]=fileparts(mfilename('fullpath'));
+    if isempty(cdir)
+        [cdir,~,~]=fileparts(mfilename('fullpath'));
         disp("You don't have specified a custom data directory");
     end
-    cd(cudir);
-    fprintf('All the data files in %s will be analyzed\n', cudir);
+    cd(cdir);
+    fprintf('All the data files in %s will be analyzed\n', cdir);
     filefinder=dir('*_USRP.txt');
-    flist=[filefinder.name,""];         %Weird workaround
+    flst=[filefinder.name,""];         %Weird workaround
 end
 
-% At this point i have an array of filenames
+% At this point I have an array of filenames
 
-nfiles=size(flist,2)-1;
+nfiles=size(flst,2)-1;
 % ?Ask the user if sure about running verbose if nfiles>10?
 data=zeros(150,8195,nfiles);
-
+tic;
 for c=1:nfiles
-        data(:,:,c)=importdata(flist(c),',');
+        data(:,:,c)=importdata(flst(c),',');
 end
-
 % header=data(:,1:3,:); %Just in case they can prove useful
 data(:,1:3,:)=[]; %Clean unwanted data
-
-disp('Data correctly retrieved')
+t=toc;
+fprintf('Data correctly retrieved in %d s\n',t);
 
 rows=size(data,1);
 cols=size(data,2);
@@ -160,12 +140,6 @@ out = integral;
 
 if plot
     
-    % ----- NEVER MOVE INTEGRAL BLOCK BELOW THIS IF -----
-    if smpl>1
-        x=x(1:smpl:end);
-        data=data(:,1:smpl:end,:);
-    end
-    
     % This section shows some quite bad examples of using MATLAB. Be aware!
     
     if dfpf
@@ -185,7 +159,7 @@ if plot
     if epng
         if isempty(odir)
             disp("You don't have specified a custom output folder");
-            odir=cudir;
+            odir=cdir;
         end
         mkdir('skyscan_png');
         printfig=@exportpng;
@@ -201,14 +175,22 @@ if plot
     
     for c=1:nfiles
         if c<=fig_lim
-            createfig(flist,c);
+            createfig(flst,c);
+            title(flst(c),'Interpreter','none');
+            % labels
         end
-        hold on
-            y=data(:,:,c);
-            l=line(x,y,'LineStyle','none','Marker','.');
-            set(l, {'color'}, num2cell(cmap, 2));
-        printfig(odir,flist(c));
-        is_brws(rows,flist,c);
+        
+        y=data(:,:,c);
+        
+        hold on;
+        
+        l=line(x,y,'LineStyle','none','Marker','.');
+        set(l, {'color'}, num2cell(cmap, 2));
+        xlim([x(1),x(end)]);
+        % ?Add ylim?
+        printfig(odir,flst(c));
+        is_brws(rows,flst,c);
+            
         hold off
     end
   
@@ -216,24 +198,22 @@ if plot
         set(gcf,'Name','Multifile');
     end
     % Return to .m directory
-    [cudir,~,~]=fileparts(mfilename('fullpath'));
-    cd(cudir);
+    [cdir,~,~]=fileparts(mfilename('fullpath'));
+    cd(cdir);
 end
 
-function l=legendgenerator(sz,flist,c)
+function l=legendgenerator(rows,flist,c)
 % LEGENDGENERATOR is useful for giving names in plotbrowser
-
 flist=regexprep(flist, '_USRP.txt', '', 'lineanchors');
-nmb=(1:sz)';
-l=[];
+nmb=(1:rows)';
+l=strings(1,rows*c);
 for k=1:c
-    str=repmat(flist(k),[sz 1]);
-    l=[l,strcat(str, {'  Line:'}, num2str(nmb))];
-    %Preallocating would be better, but nevermind.
+    str=repmat(flist(k),[rows 1]);
+    l(1+((k-1)*rows):k*rows)=strcat(str, {'  Line:'}, num2str(nmb));
 end
 
-function plotlegend(sz,flist,c)
-legend(legendgenerator(sz,flist,c));
+function plotlegend(rows,flist,c)
+legend(legendgenerator(rows,flist,c));
 plotbrowser;
 legend('toggle')
 
@@ -243,15 +223,11 @@ return;
 function nothing3(~,~,~)
 return;
 
-function sname=silentfigure(flist,c)
+function silentfigure(flist,c)
 figure('Name',flist(c),'Visible','off');
-title(flist(c),'Interpreter','none');
 
 function loudfigure(flist,c)
-figure('Name',flist(c));      %Rembember to add to path, doing that in
-        %addpath('skyscan_png');   %the program significantly slows down
-                                   %the function.
-title(flist(c),'Interpreter','none');
+figure('Name',flist(c));
 
 function exportpng(cudir,name)
 saveas(gcf,strcat(cudir,'/skyscan_png/',name,'.png'));
