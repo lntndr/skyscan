@@ -57,7 +57,6 @@ epng=in.export_png;
 odir=in.output_dir;
 
 %% Consistency checks
-
 % Filesystem
 
 if flst(1)==("")   % The user hasn't specified a filename
@@ -86,7 +85,7 @@ end
 %% text files handling
 
 if recr % Working on a directory
-    if isempty(cdir)
+    if cdir==("")
         [cdir,~,~]=fileparts(mfilename('fullpath'));
         disp("You don't have specified a custom data directory");
     end
@@ -129,13 +128,14 @@ x = x + 1300001024;
 x = (x - 19531);
 
 %% Integral time
-
+tic;
 integral=zeros(nfiles,rows);
 for k=1:nfiles
         integral(k,:)=trapz(data(:,:,k),2);
 end
 out = integral;
-    
+t=toc;
+fprintf('Integrals evaluated in %d s\n',t);
 %% Plot time
 
 if plot
@@ -164,13 +164,13 @@ if plot
         mkdir('skyscan_png');
         printfig=@exportpng;
     else
-        printfig=@nothing2;
+        printfig=@nothing2;         %Like this one
     end
     
     if brws
        is_brws=@plotlegend;
     else
-       is_brws=@nothing3;           %Like this one
+       is_brws=@nothing3;           %Or like this one
     end
     
     for c=1:nfiles
@@ -205,11 +205,11 @@ end
 function l=legendgenerator(rows,flist,c)
 % LEGENDGENERATOR is useful for giving names in plotbrowser
 flist=regexprep(flist, '_USRP.txt', '', 'lineanchors');
-nmb=(1:rows)';
+nmbr=(1:rows)';
 l=strings(1,rows*c);
 for k=1:c
     str=repmat(flist(k),[rows 1]);
-    l(1+((k-1)*rows):k*rows)=strcat(str, {'  Line:'}, num2str(nmb));
+    l(1+((k-1)*rows):k*rows)=strcat(str, {'  Line:'}, num2str(nmbr));
 end
 
 function plotlegend(rows,flist,c)
