@@ -22,7 +22,7 @@ dflt.custom_directory="";
 %graphic defaults
 dflt.make_plot=true;
 dflt.dedicated_figure_per_file=true;     %if false, one plot for all files
-dflt.enable_browser=false;
+%dflt.browser=false;
 dflt.silent_run=false;
 dflt.export_png=true;
 dflt.output_dir="";
@@ -51,7 +51,7 @@ cdir=in.custom_directory;
 % graphics reading
 plot=in.make_plot;
 dfpf=in.dedicated_figure_per_file;
-brws=in.enable_browser;
+%brws=in.browser;
 slnt=in.silent_run;
 epng=in.export_png;
 odir=in.output_dir;
@@ -106,8 +106,7 @@ for c=1:nfiles
 end
 % header=data(:,1:3,:); %Just in case they can prove useful
 data(:,1:3,:)=[]; %Clean unwanted data
-t=toc;
-fprintf('Data correctly retrieved in %d s\n',t);
+fprintf('Data correctly retrieved in %d s\n',toc);
 
 rows=size(data,1);
 cols=size(data,2);
@@ -134,13 +133,14 @@ for k=1:nfiles
         integral(k,:)=trapz(data(:,:,k),2);
 end
 out = integral;
-t=toc;
-fprintf('Integrals evaluated in %d s\n',t);
+fprintf('Integrals evaluated in %d s\n',toc);
 %% Plot time
 
 if plot
     
     % This section shows some quite bad examples of using MATLAB. Be aware!
+    
+    %% plot checks
     
     if dfpf
         cmap=jet(rows);
@@ -157,7 +157,7 @@ if plot
     end
     
     if epng
-        if isempty(odir)
+        if odir==("")
             disp("You don't have specified a custom output folder");
             odir=cdir;
         end
@@ -167,13 +167,16 @@ if plot
         printfig=@nothing2;         %Like this one
     end
     
-    if brws
-       is_brws=@plotlegend;
-    else
-       is_brws=@nothing3;           %Or like this one
-    end
+%     if brws
+%        is_brws=@plotlegend;
+%     else
+%        is_brws=@nothingN;           %Like this one
+%     end
+    
+    %% main plot
     
     for c=1:nfiles
+        
         if c<=fig_lim
             createfig(flst,c);
             title(flst(c),'Interpreter','none');
@@ -185,42 +188,32 @@ if plot
         hold on;
         
         l=line(x,y,'LineStyle','none','Marker','.');
-        set(l, {'color'}, num2cell(cmap, 2));
+        
+        if dfpf         %I have to find a better way
+            set(l, {'color'}, num2cell(cmap, 2));
+        else
+            set(l, 'color', cmap(c,:));
+        end
+        
         xlim([x(1),x(end)]);
         % ?Add ylim?
         printfig(odir,flst(c));
-        is_brws(rows,flst,c);
-            
+        %is_brws(rows,flst,c,dfpf); %<<<BROWSER
         hold off
     end
   
     if fig_lim==1
         set(gcf,'Name','Multifile');
+        title('Multifile');
     end
+    
     % Return to .m directory
-    [cdir,~,~]=fileparts(mfilename('fullpath'));
-    cd(cdir);
+    %[cdir,~,~]=fileparts(mfilename('fullpath'));
+    %cd(cdir);
+    
 end
-
-function l=legendgenerator(rows,flist,c)
-% LEGENDGENERATOR is useful for giving names in plotbrowser
-flist=regexprep(flist, '_USRP.txt', '', 'lineanchors');
-nmbr=(1:rows)';
-l=strings(1,rows*c);
-for k=1:c
-    str=repmat(flist(k),[rows 1]);
-    l(1+((k-1)*rows):k*rows)=strcat(str, {'  Line:'}, num2str(nmbr));
-end
-
-function plotlegend(rows,flist,c)
-legend(legendgenerator(rows,flist,c));
-plotbrowser;
-legend('toggle')
 
 function nothing2(~,~)
-return;
-
-function nothing3(~,~,~)
 return;
 
 function silentfigure(flist,c)
@@ -230,4 +223,5 @@ function loudfigure(flist,c)
 figure('Name',flist(c));
 
 function exportpng(cudir,name)
+[~,name,~]=fileparts(name);
 saveas(gcf,strcat(cudir,'/skyscan_png/',name,'.png'));
