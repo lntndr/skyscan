@@ -102,7 +102,11 @@ nfiles=size(flst,2)-1;
 data=zeros(150,8195,nfiles);
 tic;
 for c=1:nfiles
-        data(:,:,c)=importdata(flst(c),',');
+        try
+            data(:,:,c)=importdata(flst(c),',');
+        catch
+            fprintf("%s can't be read. Probabily has less than 150 sloc\n",flst(c));
+        end
 end
 % header=data(:,1:3,:); %Just in case they can prove useful
 data(:,1:3,:)=[]; %Clean unwanted data
