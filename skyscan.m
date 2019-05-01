@@ -16,13 +16,13 @@ narginchk(0,1)
 
 %filesystem defaults
 dflt.recur_over_folder=true;
-dflt.filenames="";
+dflt.filename="";
 dflt.custom_directory="";
 
 %graphic defaults
 dflt.make_plot=true;
 dflt.dedicated_figure_per_file=true;     %if false, one plot for all files
-%dflt.browser=false;
+dflt.browser=false;
 dflt.silent_run=false;
 dflt.export_png=true;
 dflt.output_dir="";
@@ -44,14 +44,14 @@ end
 % fill short-named variables
 
 % filesystem reading
-flst=[in.filenames,""];                 % I need it to be an array
+flst=[in.filename,""];                 % I need it to be an array
 recr=in.recur_over_folder;
 cdir=in.custom_directory;
 
 % graphics reading
 plot=in.make_plot;
 dfpf=in.dedicated_figure_per_file;
-%brws=in.browser;
+brws=in.browser;
 slnt=in.silent_run;
 epng=in.export_png;
 odir=in.output_dir;
@@ -67,6 +67,9 @@ else                % The user has specified a filename
     if recr
        warning("As you have specified a filename, recur will be set to false");
        recr=false;
+       if cdir~=("") %Look for the file in the custom folder
+           cd(cdir);
+       end
     end
 end
 
@@ -102,11 +105,16 @@ nfiles=size(flst,2)-1;
 data=zeros(150,8195,nfiles);
 tic;
 for c=1:nfiles
-        try
-            data(:,:,c)=importdata(flst(c),',');
-        catch
-            fprintf("%s can't be read. Probabily has less than 150 sloc\n",flst(c));
+    try
+        data(:,:,c)=importdata(flst(c),',');
+    catch ME
+        if ME.identifier=="MATLAB:subsassigndimmismatch"
+            warning('%s is incomplete',flst(c));
+            tmp=importdata(flst(c),',');
+            gap=size(data,1)-size(tmp,1);
+            data(:,:,c)=[tmp;repmat(tmp(end,:),gap,1)];
         end
+    end
 end
 % header=data(:,1:3,:); %Just in case they can prove useful
 data(:,1:3,:)=[]; %Clean unwanted data
@@ -140,6 +148,8 @@ out = integral;
 fprintf('Integrals evaluated in %d s\n',toc);
 %% Plot time
 
+subf=strcat('skyscan_png_',datestr(datetime,'yymmdd_HHMMSS'));
+
 if plot
     
     % This section shows some quite bad examples of using MATLAB. Be aware!
@@ -165,18 +175,17 @@ if plot
             disp("You don't have specified a custom output folder");
             odir=cdir;
         end
-        subf=strcat('skyscan_png_',datestr(datetime,'yy-mm-dd_HH-MM-SS'));
         mkdir(subf);
         printfig=@exportpng;
     else
         printfig=@nothing3;         %Like this one
     end
     
-%     if brws
-%        is_brws=@plotlegend;
-%     else
-%        is_brws=@nothingN;           %Like this one
-%     end
+    if brws
+       is_brws=@call_brws;
+    else
+       is_brws=@nothing4;           %Like this one
+    end
     
     %% main plot
     
@@ -203,7 +212,7 @@ if plot
         xlim([x(1),x(end)]);
         % ?Add ylim?
         printfig(odir,flst(c),subf);
-        %is_brws(rows,flst,c,dfpf); %<<<BROWSER
+        is_brws(rows,flst,c,dfpf); %<<<BROWSER
         hold off
     end
   
@@ -214,11 +223,15 @@ if plot
     
     % Return to .m directory
     %[cdir,~,~]=fileparts(mfilename('fullpath'));
+  
     %cd(cdir);
     
 end
 
 function nothing3(~,~,~)
+return;
+
+function nothing4(~,~,~,~)
 return;
 
 function silentfigure(flist,c)
@@ -230,3 +243,24 @@ figure('Name',flist(c));
 function exportpng(cudir,name,subf)
 [~,name,~]=fileparts(name);
 saveas(gcf,strcat(cudir,'/',subf,'/',name,'.png'));
+
+function call_brws(rows,flist,c,dfpf)
+flist=regexprep(flist, '_USRP.txt', '', 'lineanchors');
+nmbr=(1:rows)';
+if dfpf
+    str=repmat(flist(c),[rows 1]);
+    l=strcat(str, {'  Line:'}, num2str(nmbr));
+else
+    if c==size(flist,2)-1
+        l=strings(1,rows*c);
+        for k=1:c
+            str=repmat(flist(k),[rows 1]);
+            l(1+((k-1)*rows):k*rows)=strcat(str, {'  Line:'}, num2str(nmbr));
+        end
+    else
+        return;
+    end
+end
+legend(l);
+legend('hide')
+plotbrowser;
