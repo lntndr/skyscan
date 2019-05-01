@@ -165,10 +165,11 @@ if plot
             disp("You don't have specified a custom output folder");
             odir=cdir;
         end
-        mkdir('skyscan_png');
+        subf=strcat('skyscan_png_',datestr(datetime,'yy-mm-dd_HH-MM-SS'));
+        mkdir(subf);
         printfig=@exportpng;
     else
-        printfig=@nothing2;         %Like this one
+        printfig=@nothing3;         %Like this one
     end
     
 %     if brws
@@ -217,7 +218,7 @@ if plot
     
 end
 
-function nothing2(~,~)
+function nothing3(~,~,~)
 return;
 
 function silentfigure(flist,c)
@@ -226,6 +227,6 @@ figure('Name',flist(c),'Visible','off');
 function loudfigure(flist,c)
 figure('Name',flist(c));
 
-function exportpng(cudir,name)
+function exportpng(cudir,name,subf)
 [~,name,~]=fileparts(name);
-saveas(gcf,strcat(cudir,'/skyscan_png/',name,'.png'));
+saveas(gcf,strcat(cudir,'/',subf,'/',name,'.png'));
