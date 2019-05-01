@@ -202,7 +202,7 @@ if plot
         
         xlim([x(1),x(end)]);
         % ?Add ylim?
-        printfig(odir,flst(c));
+        printfig(odir,flst(c),subf);
         %is_brws(rows,flst,c,dfpf); %<<<BROWSER
         hold off
     end
