@@ -98,7 +98,7 @@ if recr % Working on a directory
     flst=[filefinder.name,""];         %Weird workaround
 end
 
-% At this point I have an array of filenames
+%% Data reading
 
 nfiles=size(flst,2)-1;
 % ?Ask the user if sure about running verbose if nfiles>10?
@@ -113,10 +113,11 @@ for c=1:nfiles
             tmp=importdata(flst(c),',');
             gap=size(data,1)-size(tmp,1);
             data(:,:,c)=[tmp;repmat(tmp(end,:),gap,1)];
+        else
+            error('Unexpected error reading %s',flst(c));
         end
     end
 end
-% header=data(:,1:3,:); %Just in case they can prove useful
 data(:,1:3,:)=[]; %Clean unwanted data
 fprintf('Data correctly retrieved in %d s\n',toc);
 
@@ -124,11 +125,7 @@ rows=size(data,1);
 cols=size(data,2);
 
 %At this point the function has loaded all the y data in a 3D matrix (2D if
-%single file mode). It's faster than a cell but requires the memory
-%allocated to be contiguos so it's probabily a bad idea to use with a lot
-%of files, a lot definition depending by the RAM the computer has. The cell
-%method would probably worth implementing only if it will be necessary to
-%compare dozens of files. 
+%single file mode).
 
 %% Managing X
 % As provided by the lab guy, just copy-pasted.
@@ -146,6 +143,7 @@ for k=1:nfiles
 end
 out = integral;
 fprintf('Integrals evaluated in %d s\n',toc);
+
 %% Plot time
 
 subf=strcat('skyscan_png_',datestr(datetime,'yymmdd_HHMMSS'));
@@ -211,20 +209,15 @@ if plot
         
         xlim([x(1),x(end)]);
         % ?Add ylim?
-        printfig(odir,flst(c),subf);
-        is_brws(rows,flst,c,dfpf); %<<<BROWSER
+        printfig(odir,flst(c),subf);    %<<<PNG-export
+        is_brws(rows,flst,c,dfpf);      %<<<BROWSER
         hold off
     end
   
-    if fig_lim==1
+    if fig_utlim==1
         set(gcf,'Name','Multifile');
         title('Multifile');
     end
-    
-    % Return to .m directory
-    %[cdir,~,~]=fileparts(mfilename('fullpath'));
-  
-    %cd(cdir);
     
 end
 
