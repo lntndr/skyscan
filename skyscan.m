@@ -108,12 +108,14 @@ for c=1:nfiles
     try
         data(:,:,c)=importdata(flst(c),',');
     catch ME
-        if ME.identifier=="MATLAB:subsassigndimmismatch"
+        if isequal(ME.identifier,'MATLAB:subsassigndimmismatch')
             warning('%s is incomplete',flst(c));
             tmp=importdata(flst(c),',');
             gap=size(data,1)-size(tmp,1);
             data(:,:,c)=[tmp;repmat(tmp(end,:),gap,1)];
-        else
+        elseif isequal(ME.identifier,'MATLAB:invalidConversion')
+            error("It's impossible to convert %s in a matrix. Probably you have to run filecleaner first.",flst(c));
+        else 
             error('Unexpected error reading %s',flst(c));
         end
     end
@@ -182,11 +184,12 @@ if plot
     if brws
        is_brws=@call_brws;
     else
-       is_brws=@nothing4;           %Like this one
+       is_brws=@nothing4;          %Like this one
+       tic;
     end
     
     %% main plot
-    
+
     for c=1:nfiles
         
         if c<=fig_lim
@@ -214,11 +217,15 @@ if plot
         hold off
     end
   
-    if fig_utlim==1
+    if fig_lim==1
         set(gcf,'Name','Multifile');
         title('Multifile');
     end
     
+    if ~brws
+        fprintf('Plot generated in %d s\n',toc);
+    end
+
 end
 
 function nothing3(~,~,~)
